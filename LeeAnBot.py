@@ -1,5 +1,6 @@
 import pyupbit
 import math
+import time
 
 # Upbit API 연동
 access_key = 'fM9Ya2lyy4o6xbPs8McKztx1U3XxDtPWz5N6i10d'
@@ -73,42 +74,51 @@ def get_revenue_rate(balances, ticker):
 
     return revenue_rate
 
-    
-df_day = pyupbit.get_ohlcv(ticker, interval="minute5")     # 5분봉 정보
-rsi14 = get_rsi(df_day, 14).iloc[-1]                          # 현재 RSI
-before_rsi14 = get_rsi(df_day, 14).iloc[-2]                 # 5분전 RSI
+while True:
+    my_money = float(balances[0]['balance'])
+    df_day = pyupbit.get_ohlcv(ticker, interval="minute5")     # 5분봉 정보
+    rsi14 = get_rsi(df_day, 14).iloc[-1]                          # 현재 RSI
+    before_rsi14 = get_rsi(df_day, 14).iloc[-2]                 # 5분전 RSI
 
-if has_coin(ticker, balances):
-    # 매도 조건 충족 (과매수 구간일 때)
-    ticker_rate = get_revenue_rate(balances, ticker)     # 수익률 확인
-    if rsi14 > 70:
-        # 목표 수익률을 만족한다면
-        if ticker_rate >= target_revenue:
-            amount = upbit.get_balance(ticker)           # 현재 코인 보유 수량
-            upbit.sell_market_order(ticker, amount)  # 시장가에 매도 
-            balances = upbit.get_balances()                     # 매도했으니 잔고를 최신화!
-else:
-    # 매수 조건 충족
-    if rsi14 > 30 and before_rsi14 < 30:
-        upbit.buy_market_order(ticker, money * buy_coin)   # 시장가에 코인 매수
-        balances = upbit.get_balances()         		   # 매수했으니 잔고를 최신화!
+    if has_coin(ticker, balances):
+        # 매도 조건 충족 (과매수 구간일 때)
+        ticker_rate = get_revenue_rate(balances, ticker)     # 수익률 확인
+        if rsi14 > 70:
+            # 목표 수익률을 만족한다면
+            if ticker_rate >= target_revenue:
+                amount = upbit.get_balance(ticker)           # 현재 코인 보유 수량
+                upbit.sell_market_order(ticker, amount)  # 시장가에 매도 
+                balances = upbit.get_balances()                     # 매도했으니 잔고를 최신화!
+    else:
+        # 매수 조건 충족
+        if rsi14 > 30 and before_rsi14 < 30:
+            upbit.buy_market_order(ticker, buy_coin)   # 시장가에 코인 매수
+            balances = upbit.get_balances()         		   # 매수했으니 잔고를 최신화!
 
+    print("price : " + str(df_day['close'][0]))
+    print("rsi14 : " + str(rsi14))
+    print("my_money : " + str(my_money))
+    print("coin : " + str(upbit.get_balance(ticker)))
 
-ticker_rate = get_revenue_rate(balances, ticker)
-balances = upbit.get_balances()
-have_coin = 0.0
-for coin in balances:
-    coin_ticker = coin['unit_currency'] + "-" + coin['currency']
+    ticker_rate = get_revenue_rate(balances, ticker)
+    balances = upbit.get_balances()
+    have_coin = 0.0
+    for coin in balances:
+        coin_ticker = coin['unit_currency'] + "-" + coin['currency']
 
-    if ticker == coin_ticker:
-        have_coin = float(coin['avg_buy_price']) * float(coin['balance'])
-        ticker_rate = get_revenue_rate(balances, ticker)
+        if ticker == coin_ticker:
+            have_coin = float(coin['avg_buy_price']) * float(coin['balance'])
+            ticker_rate = get_revenue_rate(balances, ticker)
 
-	# 실제 매수된 금액의 오차 감안
-        if have_coin > 5500:
-            if ticker_rate <= sell_coin:
-                amount = upbit.get_balance(ticker)       # 현재 코인 보유 수량	  
-                upbit.sell_market_order(ticker, amount)   # 시장가에 매도
+        # 실제 매수된 금액의 오차 감안
+            if have_coin >= 5500:
+                if ticker_rate <= sell_coin:
+                    amount = upbit.get_balance(ticker)       # 현재 코인 보유 수량	  
+                    upbit.sell_market_order(ticker, amount)   # 시장가에 매도
+                    balances = upbit.get_balances()         		   # 매도했으니 잔고를 최신화!
 
-            elif ticker_rate <= buy_coin_plus:
-                upbit.buy_market_order(ticker, buy_coin)   # 시장가에 코인 매수
+                elif ticker_rate <= buy_coin_plus and my_money >= 5500:
+                    upbit.buy_market_order(ticker, buy_coin)   # 시장가에 코인 매수
+                    balances = upbit.get_balances()         		   # 매수했으니 잔고를 최신화!
+
+    time.sleep(1)
