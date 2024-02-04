@@ -20,7 +20,7 @@ sell_coin = -1.0     #손절타이밍
 
 target_revenue = 0.5       # 목표 수익률 (0.5 %)
 
-ticker = "KRW-XRP"				       # 비트코인을 티커로 지정
+ticker = "KRW-SOL"				       # 비트코인을 티커로 지정
 btc_day = pyupbit.get_ohlcv(ticker, interval="minute5")    # 코인의 5분봉 정보
 
 
@@ -89,16 +89,21 @@ while True:
                 amount = upbit.get_balance(ticker)           # 현재 코인 보유 수량
                 upbit.sell_market_order(ticker, amount)  # 시장가에 매도 
                 balances = upbit.get_balances()                     # 매도했으니 잔고를 최신화!
+                time.sleep(3)
             elif rsi14 - before_rsi14 < 3:
                 amount = upbit.get_balance(ticker)           # 현재 코인 보유 수량
                 upbit.sell_market_order(ticker, amount)  # 시장가에 매도 
                 balances = upbit.get_balances()                     # 매도했으니 잔고를 최신화!
+                time.sleep(3)
 
     else:
         # 매수 조건 충족
+        print("매수조건")
         if rsi14 >= 33 and before_rsi14 < 33:
+            print("매수조건충족")
             upbit.buy_market_order(ticker, buy_coin)   # 시장가에 코인 매수
             balances = upbit.get_balances()         		   # 매수했으니 잔고를 최신화!
+            time.sleep(3)
 
     print("price : " + str(df_day['close'][0]))
     print("rsi14 : " + str(rsi14))
@@ -121,9 +126,11 @@ while True:
                     amount = upbit.get_balance(ticker)       # 현재 코인 보유 수량	  
                     upbit.sell_market_order(ticker, amount)   # 시장가에 매도
                     balances = upbit.get_balances()         		   # 매도했으니 잔고를 최신화!
+                    time.sleep(3)
 
                 elif ticker_rate <= buy_coin_plus and my_money >= 5500:
                     upbit.buy_market_order(ticker, buy_coin)   # 시장가에 코인 매수
                     balances = upbit.get_balances()         		   # 매수했으니 잔고를 최신화!
+                    time.sleep(3)
 
     time.sleep(1)
