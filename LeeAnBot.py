@@ -20,7 +20,7 @@ sell_coin = -1.0     #손절타이밍
 
 target_revenue = 0.5       # 목표 수익률 (0.5 %)
 
-ticker = "KRW-SSX"				       # 비트코인을 티커로 지정
+ticker = "KRW-XRP"				       # 비트코인을 티커로 지정
 btc_day = pyupbit.get_ohlcv(ticker, interval="minute5")    # 코인의 5분봉 정보
 
 
@@ -81,17 +81,22 @@ while True:
     before_rsi14 = get_rsi(df_day, 14).iloc[-2]                 # 5분전 RSI
 
     if has_coin(ticker, balances):
-        # 매도 조건 충족 (과매수 구간일 때)
+        # 매도 조건 충족 (목표 수익률을 만족한다면)
         ticker_rate = get_revenue_rate(balances, ticker)     # 수익률 확인
-        if rsi14 > 70:
-            # 목표 수익률을 만족한다면
-            if ticker_rate >= target_revenue:
+        if ticker_rate >= target_revenue:
+            # 과매수 상태이면 rsi14 >= 70
+            if rsi14 >= 70:
                 amount = upbit.get_balance(ticker)           # 현재 코인 보유 수량
                 upbit.sell_market_order(ticker, amount)  # 시장가에 매도 
                 balances = upbit.get_balances()                     # 매도했으니 잔고를 최신화!
+            elif rsi14 - before_rsi14 < 3:
+                amount = upbit.get_balance(ticker)           # 현재 코인 보유 수량
+                upbit.sell_market_order(ticker, amount)  # 시장가에 매도 
+                balances = upbit.get_balances()                     # 매도했으니 잔고를 최신화!
+
     else:
         # 매수 조건 충족
-        if rsi14 > 30 and before_rsi14 < 30:
+        if rsi14 >= 33 and before_rsi14 < 33:
             upbit.buy_market_order(ticker, buy_coin)   # 시장가에 코인 매수
             balances = upbit.get_balances()         		   # 매수했으니 잔고를 최신화!
 
