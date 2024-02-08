@@ -68,4 +68,4 @@ class MyClient(discord.Client):
 intents = discord.Intents.default()
 intents.message_content = True
 client = MyClient(intents=intents)
-client.run("MTIwMzMyNjMwMDg0NTEyMTYxNg.Gz3j1s.hguPqacntEPqv0_WWon78QQMvhIUd1I7foGacA")
+client.run("토큰")
